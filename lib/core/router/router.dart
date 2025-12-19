@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '/features/details/details_screen.dart';
 import '/features/home/home_screen.dart';
+import '/features/rewards/reward_page.dart';
 
 final GoRouter router = GoRouter(
   routes: <RouteBase>[
@@ -13,6 +14,12 @@ final GoRouter router = GoRouter(
       },
       routes: <RouteBase>[
         GoRoute(
+          path: 'stickers',
+          builder: (BuildContext context, GoRouterState state) {
+            return const TreasurePage();
+          },
+        ),
+        GoRoute(
           path: 'details/:itemId',
           builder: (BuildContext context, GoRouterState state) {
             final extra = state.extra as Map<String, dynamic>?;
@@ -22,8 +29,7 @@ final GoRouter router = GoRouter(
             return DetailsScreen(
               itemId: state.pathParameters['itemId'],
               title: title,
-              // Pass the color to the DetailsScreen, with a default
-              // color: color ?? Colors.blueGrey,
+              color: color ?? Colors.blueGrey,
             );
           },
         ),

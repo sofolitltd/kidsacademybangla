@@ -29,11 +29,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
   late List<Map<String, dynamic>> _items;
   late AudioPlayer _audioPlayer;
   StreamSubscription? _playerCompleteSubscription;
+  StreamSubscription? _playerStateSubscription;
 
   final ScrollController _scrollController = ScrollController();
   late List<GlobalKey> _cardKeys;
   AutoplayState _autoplayState = AutoplayState.stopped;
   int _currentlyPlayingIndex = -1;
+  bool _isAudioLoading = false;
 
   @override
   void initState() {
@@ -42,12 +44,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
     _audioPlayer = AudioPlayer();
     _cardKeys = List.generate(_items.length, (_) => GlobalKey());
 
-    // Use onPlayerComplete stream for more reliable sequence handling
     _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
       if (_autoplayState == AutoplayState.playing) {
         _playNextInSequence();
-      } else {
-        if (mounted) setState(() => _currentlyPlayingIndex = -1);
+      }
+    });
+
+    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((
+      state,
+    ) {
+      if (state == PlayerState.playing ||
+          state == PlayerState.paused ||
+          state == PlayerState.completed) {
+        if (mounted && _isAudioLoading) {
+          setState(() => _isAudioLoading = false);
+        }
       }
     });
   }
@@ -55,66 +66,158 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   void dispose() {
     _playerCompleteSubscription?.cancel();
+    _playerStateSubscription?.cancel();
     _audioPlayer.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _playSound(String soundFile, int index) async {
-    if (soundFile.isEmpty) return;
+  int _calculateSilentDelay(Map<String, dynamic> item) {
+    String combinedText = "";
+    item.forEach((key, value) {
+      if (value is String && key != 'sound' && key != 'image' && key != 'hex') {
+        combinedText += " $value";
+      }
+    });
+    int wordCount = combinedText.trim().split(RegExp(r'\s+')).length;
+    int delay = 2000 + (wordCount * 350);
+    return delay.clamp(2000, 8000);
+  }
+
+  Future<void> _playSound(dynamic soundSource, int index) async {
     if (mounted) setState(() => _currentlyPlayingIndex = index);
+    if (soundSource == null || (soundSource is String && soundSource.isEmpty))
+      return;
 
     try {
-      final String soundPath = 'sounds/${widget.itemId}/$soundFile';
-      await _audioPlayer.play(AssetSource(soundPath));
+      if (_audioPlayer.state != PlayerState.paused) {
+        await _audioPlayer.stop();
+      }
+
+      if (soundSource is String && soundSource.startsWith('http')) {
+        if (mounted) setState(() => _isAudioLoading = true);
+        await _audioPlayer.play(UrlSource(soundSource));
+      } else {
+        await _audioPlayer.play(
+          AssetSource('sounds/${widget.itemId}/$soundSource'),
+        );
+      }
     } catch (e) {
-      print("Error playing sound: $e");
-      if (mounted) setState(() => _currentlyPlayingIndex = -1);
+      debugPrint("Error playing sound: $e");
+      if (mounted) setState(() => _isAudioLoading = false);
+      if (_autoplayState == AutoplayState.playing) {
+        int delay = _calculateSilentDelay(_items[index]);
+        Future.delayed(Duration(milliseconds: delay), () {
+          if (_autoplayState == AutoplayState.playing &&
+              _currentlyPlayingIndex == index) {
+            _playNextInSequence();
+          }
+        });
+      }
     }
   }
 
-  void _handlePlayPause() {
-    switch (_autoplayState) {
-      case AutoplayState.playing:
-        _audioPlayer.pause();
-        if (mounted) setState(() => _autoplayState = AutoplayState.paused);
-        break;
-      case AutoplayState.paused:
-        _audioPlayer.resume();
-        if (mounted) setState(() => _autoplayState = AutoplayState.playing);
-        break;
-      case AutoplayState.stopped:
-        _startAutoplayFrom(0);
-        break;
+  void _handleItemTap(int index) {
+    if (_autoplayState != AutoplayState.stopped) {
+      _audioPlayer.stop();
+      if (mounted) setState(() => _autoplayState = AutoplayState.stopped);
+    }
+    _scrollToIndex(index);
+
+    final item = _items[index];
+    dynamic soundSource;
+    if (widget.itemId == 'small_suras') {
+      soundSource =
+          'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${item['id']}.mp3';
+    } else {
+      soundSource = item['sound'] ?? '';
+    }
+
+    _playSound(soundSource, index);
+  }
+
+  void _handlePlayPause() async {
+    if (_autoplayState == AutoplayState.playing) {
+      await _audioPlayer.pause();
+      if (mounted) setState(() => _autoplayState = AutoplayState.paused);
+    } else if (_autoplayState == AutoplayState.paused) {
+      if (mounted) setState(() => _autoplayState = AutoplayState.playing);
+      if (_audioPlayer.state == PlayerState.paused) {
+        await _audioPlayer.resume();
+      } else {
+        _playSequentially(_currentlyPlayingIndex);
+      }
+    } else {
+      int startIndex = _currentlyPlayingIndex;
+      if (startIndex == -1 || startIndex >= _items.length - 1) {
+        startIndex = 0;
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+      _startAutoplayFrom(startIndex);
     }
   }
 
   void _handleStop() {
+    _audioPlayer.stop();
     if (mounted) {
       setState(() {
         _autoplayState = AutoplayState.stopped;
-        _currentlyPlayingIndex = -1;
+        _isAudioLoading = false;
       });
-      _audioPlayer.stop();
     }
   }
 
-  // New function to start autoplay from any index
   void _startAutoplayFrom(int index) {
-    if (mounted) {
-      setState(() {
-        _autoplayState = AutoplayState.playing;
-      });
-      _playSequentially(index);
+    if (index >= _items.length) {
+      _handleStop();
+      return;
     }
+    if (mounted) setState(() => _autoplayState = AutoplayState.playing);
+    _playSequentially(index);
   }
 
-  void _playSequentially(int index) {
+  void _playSequentially(int index) async {
     if (index >= _items.length) {
       _handleStop();
       return;
     }
 
+    _scrollToIndex(index);
+    final item = _items[index];
+
+    dynamic soundSource;
+    if (widget.itemId == 'small_suras') {
+      soundSource =
+          'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${item['id']}.mp3';
+    } else {
+      soundSource = item['sound'] ?? '';
+    }
+
+    if (soundSource.isEmpty) {
+      if (mounted) setState(() => _currentlyPlayingIndex = index);
+      int delay = _calculateSilentDelay(_items[index]);
+      Future.delayed(Duration(milliseconds: delay), () {
+        if (_autoplayState == AutoplayState.playing &&
+            _currentlyPlayingIndex == index) {
+          _playNextInSequence();
+        }
+      });
+      return;
+    }
+
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_autoplayState == AutoplayState.playing) {
+        _playSound(soundSource, index);
+      }
+    });
+  }
+
+  void _scrollToIndex(int index) {
+    if (index < 0 || index >= _cardKeys.length) return;
     final keyContext = _cardKeys[index].currentContext;
     if (keyContext != null) {
       Scrollable.ensureVisible(
@@ -124,45 +227,39 @@ class _DetailsScreenState extends State<DetailsScreen> {
         alignment: 0.5,
       );
     }
-
-    final soundFile = _items[index]['sound'] as String? ?? '';
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_autoplayState == AutoplayState.playing) {
-        _playSound(soundFile, index);
-      }
-    });
   }
 
   void _playNextInSequence() {
     if (_autoplayState != AutoplayState.playing) return;
-    _playSequentially(_currentlyPlayingIndex + 1);
+    int nextIndex = _currentlyPlayingIndex + 1;
+    if (nextIndex < _items.length) {
+      _playSequentially(nextIndex);
+    } else {
+      _handleStop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isArabicCategory =
+    final bool isArabicCategory =
         widget.itemId == 'arabic_alphabets' ||
         widget.itemId == 'arabic_numbers' ||
+        widget.itemId == 'small_suras' ||
         widget.itemId == 'allah_names';
 
     return Scaffold(
       floatingActionButton: _buildFloatingActionButtons(),
       body: Stack(
         children: [
-          //
           Positioned.fill(
             child: Image.asset(
               'assets/images/background.png',
               fit: BoxFit.cover,
             ),
           ),
-
-          //
           Positioned.fill(
             child: Container(color: Colors.white.withValues(alpha: .3)),
           ),
-
-          //
           Column(
             children: [
               AppBar(
@@ -171,7 +268,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 centerTitle: true,
                 title: Text(widget.title ?? ""),
               ),
-
               Expanded(
                 child: Directionality(
                   textDirection: isArabicCategory
@@ -185,16 +281,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     crossAxisSpacing: 8,
                     itemCount: _items.length,
                     itemBuilder: (context, index) {
-                      final item = _items[index];
                       return Container(
                         key: _cardKeys[index],
                         child: DetailCard(
-                          item: item,
+                          item: _items[index],
                           itemId: widget.itemId,
                           categoryColor: widget.color,
                           isSelected: _currentlyPlayingIndex == index,
-                          onTap: () =>
-                              _startAutoplayFrom(index), // Updated onTap
+                          onTap: () => _handleItemTap(index),
                         ),
                       );
                     },
@@ -203,6 +297,33 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
             ],
           ),
+          if (_isAudioLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Center(
+                child: Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 20),
+                        const Text(
+                          "ছোট্ট বন্ধুরা একটু অপেক্ষা করো, সুরা ডাউনলোড হচ্ছে...",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -213,6 +334,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       return FloatingActionButton.extended(
         onPressed: _handlePlayPause,
         backgroundColor: Colors.green,
+        heroTag: 'play_all_tag',
         icon: const Icon(Icons.play_arrow, color: Colors.white),
         label: const Text('Play All', style: TextStyle(color: Colors.white)),
       );
@@ -252,6 +374,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
       case 'english_rhymes':
       case 'bangla_rhymes':
       case 'allah_names':
+      case 'small_suras':
         return 1;
       case 'bangla_consonants':
         return 3;
