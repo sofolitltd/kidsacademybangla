@@ -451,13 +451,30 @@ class _FocusDetailsScreenState extends State<FocusDetailsScreen> {
                                                 constraints.maxHeight - 32,
                                           ),
                                           child: Center(
-                                            child: FocusItemDetails(
-                                              item: item,
-                                              itemId: widget.itemId,
-                                              color: widget.color,
-                                              activeVerseIndex:
-                                                  _activeVerseIndex,
-                                              letterColors: _letterColors,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Shown above the title, in the
+                                                // normal flow (never overlaps).
+                                                if (widget.itemId ==
+                                                    'small_suras') ...[
+                                                  DownloadedBadge(
+                                                    url: AppUrls.surahAudio(
+                                                      item['id'],
+                                                    ),
+                                                    refresh: _isAudioLoading,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                ],
+                                                FocusItemDetails(
+                                                  item: item,
+                                                  itemId: widget.itemId,
+                                                  color: widget.color,
+                                                  activeVerseIndex:
+                                                      _activeVerseIndex,
+                                                  letterColors: _letterColors,
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
@@ -465,15 +482,6 @@ class _FocusDetailsScreenState extends State<FocusDetailsScreen> {
                                     },
                                   ),
                                 ),
-                                if (widget.itemId == 'small_suras')
-                                  Positioned(
-                                    top: 12,
-                                    right: 12,
-                                    child: DownloadedBadge(
-                                      url: AppUrls.surahAudio(item['id']),
-                                      refresh: _isAudioLoading,
-                                    ),
-                                  ),
                               ],
                             ),
                           );

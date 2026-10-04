@@ -77,7 +77,7 @@ class AdService {
   }
 
   /// Call at natural breaks (e.g. returning home). Rate limited.
-  /// Shows a card with the ad and a big "close" bar that is always at the top.
+  /// Shows a card with the ad and a big "close" bar that is always at the bottom.
   void maybeShowNativeBreak(BuildContext context) {
     final ad = _native;
     if (ad == null || _breakShowing || !_canShowAutomaticAd) return;
@@ -156,6 +156,33 @@ class _NativeBreakDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'বিজ্ঞাপন',
+                  style: TextStyle(fontSize: 12, color: Colors.brown.shade300),
+                ),
+                const SizedBox(height: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 320,
+                    maxHeight: 400,
+                  ),
+                  child: AdWidget(ad: ad),
+                ),
+              ],
+            ),
+          ),
+          // Clear gap so the ad and the close bar are never confused.
+          const SizedBox(height: 20),
           // Always-visible, same-place close bar.
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
@@ -191,33 +218,6 @@ class _NativeBreakDialog extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ),
-          // Clear gap so the close bar and the ad are never confused.
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'বিজ্ঞাপন',
-                  style: TextStyle(fontSize: 12, color: Colors.brown.shade300),
-                ),
-                const SizedBox(height: 6),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minHeight: 320,
-                    maxHeight: 400,
-                  ),
-                  child: AdWidget(ad: ad),
-                ),
-              ],
             ),
           ),
         ],

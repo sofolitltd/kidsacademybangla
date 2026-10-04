@@ -178,37 +178,44 @@ Padding _buildAllahNameContent(Map<String, dynamic> item, Color categoryColor) {
     padding: const EdgeInsets.all(8),
     child: Stack(
       children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                item['item']!,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.amiri(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+        SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text(
+                  item['item']!,
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.amiri(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '(${item['pron']!})',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey.shade700,
+              const SizedBox(height: 12),
+              Text(
+                '(${item['pron']!})',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey.shade700,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item['meaning']!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                item['meaning']!,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
         Positioned(
           top: 0,
