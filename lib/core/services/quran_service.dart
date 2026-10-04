@@ -1,18 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:kidsacademybangla/core/config/app_urls.dart';
 
 class QuranService {
-  static const String baseUrl = 'https://api.alquran.cloud/v1';
-
   static Future<Map<String, dynamic>> getSurahDetails(int surahNumber) async {
     try {
       // Fetching Arabic (simple) and Bengali translation in one call
-      final response = await http.get(
-        Uri.parse(
-          '$baseUrl/surah/$surahNumber/editions/quran-simple,bn.bengali',
-        ),
-      );
+      final response = await http.get(Uri.parse(AppUrls.surahApi(surahNumber)));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -32,8 +27,7 @@ class QuranService {
         }
 
         // Surah audio URL from CDN
-        final String audioUrl =
-            'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/$surahNumber.mp3';
+        final String audioUrl = AppUrls.surahAudio(surahNumber);
 
         return {
           'text': arabicLines.join('\n'),

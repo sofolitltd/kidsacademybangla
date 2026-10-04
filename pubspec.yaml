@@ -13,12 +13,19 @@ dependencies:
   flutter_riverpod: ^3.0.3
   go_router: ^17.0.1
   audioplayers: ^6.5.1
-  google_fonts: ^6.3.3
+  google_fonts: ^8.2.1
   flutter_staggered_grid_view: ^0.7.0
   http: ^1.3.0
   google_mobile_ads: ^7.0.0
   shared_preferences: ^2.5.4
-
+  youtube_player_flutter: ^9.1.3
+  flutter_cache_manager: ^3.4.1
+  path_provider: ^2.1.5
+  flutter_tts: ^3.7.0
+  country_flags: ^3.0.1
+  sensors_plus: ^7.1.1
+  url_launcher: ^6.3.3
+  in_app_update: ^5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -41,7 +48,17 @@ flutter:
     - assets/images/
     - assets/images/categories/
     - assets/images/animals/
+    - assets/images/birds/
     - assets/images/fruits/
+    - assets/images/flowers/
+    - assets/images/fish/
+    - assets/images/electronics/
+    - assets/images/body_parts/
+    - assets/images/vegetables/
+    - assets/images/vehicles/
+    - assets/images/dress/
+    - assets/images/rhymes/
+    - assets/images/solar_system/
     #
     - assets/sounds/
     - assets/sounds/animals/
@@ -56,3 +73,11 @@ flutter:
     - assets/sounds/arabic_numbers/
     - assets/sounds/english_rhymes/
     - assets/sounds/bangla_rhymes/
+
+  fonts:
+    - family: SolaimanLipi
+      fonts:
+        - asset: assets/fonts/SolaimanLipi.ttf
+        - asset: assets/fonts/SolaimanLipi-Bold.ttf
+          weight: 700
+          

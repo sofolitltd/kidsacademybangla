@@ -1,0 +1,3 @@
+# AdMob App ID (ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY). Template: copy to ads.properties (git-ignored).
+# Below is Google's TEST app id - replace before release.
+admobAppId=ca-app-pub-3940256099942544~3347511713

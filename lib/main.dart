@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '/core/router/router.dart';
+import '/core/services/ad_service.dart';
 
 // main.dart
 void main() async {
@@ -16,6 +17,8 @@ void main() async {
     // testDeviceIds: ["YOUR_DEVICE_ADVERTISING_ID"],
   );
   MobileAds.instance.updateRequestConfiguration(configuration);
+
+  AdService.instance.init();
 
   runApp(const MyApp());
 }

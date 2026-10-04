@@ -1,11 +1,11 @@
-import 'dart:async';
-
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/data/app_data.dart';
+import '../../core/services/speech_service.dart';
 import './widgets/detail_card.dart';
+import './widgets/details_autoplay_controller.dart';
 
 class DetailsScreen extends StatefulWidget {
   final String? itemId;
@@ -23,17 +23,12 @@ class DetailsScreen extends StatefulWidget {
   State<DetailsScreen> createState() => _DetailsScreenState();
 }
 
-enum AutoplayState { stopped, playing, paused }
-
 class _DetailsScreenState extends State<DetailsScreen> {
   late List<Map<String, dynamic>> _items;
-  late AudioPlayer _audioPlayer;
-  StreamSubscription? _playerCompleteSubscription;
-  StreamSubscription? _playerStateSubscription;
-
+  late SpeechService _speech;
   final ScrollController _scrollController = ScrollController();
   late List<GlobalKey> _cardKeys;
-  AutoplayState _autoplayState = AutoplayState.stopped;
+  late DetailsAutoplayController _autoplay;
   int _currentlyPlayingIndex = -1;
   bool _isAudioLoading = false;
 
@@ -41,202 +36,120 @@ class _DetailsScreenState extends State<DetailsScreen> {
   void initState() {
     super.initState();
     _items = AppData.getItems(widget.itemId ?? '');
-    _audioPlayer = AudioPlayer();
+    _speech = SpeechService();
+    _speech.initTts();
     _cardKeys = List.generate(_items.length, (_) => GlobalKey());
 
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
-      if (_autoplayState == AutoplayState.playing) {
-        _playNextInSequence();
-      }
-    });
-
-    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((
-      state,
-    ) {
-      if (state == PlayerState.playing ||
-          state == PlayerState.paused ||
-          state == PlayerState.completed) {
-        if (mounted && _isAudioLoading) {
-          setState(() => _isAudioLoading = false);
-        }
-      }
-    });
+    _autoplay = DetailsAutoplayController(
+      speech: _speech,
+      itemId: widget.itemId ?? '',
+      items: _items,
+      scrollController: _scrollController,
+      onIndexChanged: (i) {
+        setState(() => _currentlyPlayingIndex = i);
+        _scrollToCard(i);
+      },
+      onLoadingChanged: (v) => setState(() => _isAudioLoading = v),
+      onStateChanged: (_) {
+        if (mounted) setState(() {});
+      },
+    );
   }
 
   @override
   void dispose() {
-    _playerCompleteSubscription?.cancel();
-    _playerStateSubscription?.cancel();
-    _audioPlayer.dispose();
+    _autoplay.dispose();
+    _speech.audioPlayer.dispose();
+    _speech.disposeTts();
     _scrollController.dispose();
     super.dispose();
   }
 
-  int _calculateSilentDelay(Map<String, dynamic> item) {
-    String combinedText = "";
-    item.forEach((key, value) {
-      if (value is String && key != 'sound' && key != 'image' && key != 'hex') {
-        combinedText += " $value";
-      }
+  void _scrollToCard(int index) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _cardKeys[index].currentContext;
+      if (!mounted || ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
     });
-    int wordCount = combinedText.trim().split(RegExp(r'\s+')).length;
-    int delay = 2000 + (wordCount * 350);
-    return delay.clamp(2000, 8000);
   }
 
-  Future<void> _playSound(dynamic soundSource, int index) async {
-    if (mounted) setState(() => _currentlyPlayingIndex = index);
-    if (soundSource == null || (soundSource is String && soundSource.isEmpty))
-      return;
-
-    try {
-      if (_audioPlayer.state != PlayerState.paused) {
-        await _audioPlayer.stop();
-      }
-
-      if (soundSource is String && soundSource.startsWith('http')) {
-        if (mounted) setState(() => _isAudioLoading = true);
-        await _audioPlayer.play(UrlSource(soundSource));
-      } else {
-        await _audioPlayer.play(
-          AssetSource('sounds/${widget.itemId}/$soundSource'),
-        );
-      }
-    } catch (e) {
-      debugPrint("Error playing sound: $e");
-      if (mounted) setState(() => _isAudioLoading = false);
-      if (_autoplayState == AutoplayState.playing) {
-        int delay = _calculateSilentDelay(_items[index]);
-        Future.delayed(Duration(milliseconds: delay), () {
-          if (_autoplayState == AutoplayState.playing &&
-              _currentlyPlayingIndex == index) {
-            _playNextInSequence();
-          }
-        });
-      }
+  /// Highlights the tapped card while its speech plays (cards with no focus page).
+  Future<void> _speakAndHighlight(
+    int index,
+    Future<void> Function() speak,
+  ) async {
+    setState(() => _currentlyPlayingIndex = index);
+    await speak();
+    if (mounted &&
+        _currentlyPlayingIndex == index &&
+        _autoplay.state == AutoplayState.stopped) {
+      setState(() => _currentlyPlayingIndex = -1);
     }
   }
 
   void _handleItemTap(int index) {
-    if (_autoplayState != AutoplayState.stopped) {
-      _audioPlayer.stop();
-      if (mounted) setState(() => _autoplayState = AutoplayState.stopped);
-    }
-    _scrollToIndex(index);
-
-    final item = _items[index];
-    dynamic soundSource;
-    if (widget.itemId == 'small_suras') {
-      soundSource =
-          'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${item['id']}.mp3';
-    } else {
-      soundSource = item['sound'] ?? '';
+    if (_autoplay.state != AutoplayState.stopped) {
+      _speech.audioPlayer.stop();
+      _autoplay.handleStop();
+      setState(() {});
     }
 
-    _playSound(soundSource, index);
-  }
-
-  void _handlePlayPause() async {
-    if (_autoplayState == AutoplayState.playing) {
-      await _audioPlayer.pause();
-      if (mounted) setState(() => _autoplayState = AutoplayState.paused);
-    } else if (_autoplayState == AutoplayState.paused) {
-      if (mounted) setState(() => _autoplayState = AutoplayState.playing);
-      if (_audioPlayer.state == PlayerState.paused) {
-        await _audioPlayer.resume();
-      } else {
-        _playSequentially(_currentlyPlayingIndex);
-      }
-    } else {
-      int startIndex = _currentlyPlayingIndex;
-      if (startIndex == -1 || startIndex >= _items.length - 1) {
-        startIndex = 0;
-        _scrollController.animateTo(
-          0,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-      _startAutoplayFrom(startIndex);
-    }
-  }
-
-  void _handleStop() {
-    _audioPlayer.stop();
-    if (mounted) {
-      setState(() {
-        _autoplayState = AutoplayState.stopped;
-        _isAudioLoading = false;
-      });
-    }
-  }
-
-  void _startAutoplayFrom(int index) {
-    if (index >= _items.length) {
-      _handleStop();
-      return;
-    }
-    if (mounted) setState(() => _autoplayState = AutoplayState.playing);
-    _playSequentially(index);
-  }
-
-  void _playSequentially(int index) async {
-    if (index >= _items.length) {
-      _handleStop();
-      return;
-    }
-
-    _scrollToIndex(index);
-    final item = _items[index];
-
-    dynamic soundSource;
-    if (widget.itemId == 'small_suras') {
-      soundSource =
-          'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${item['id']}.mp3';
-    } else {
-      soundSource = item['sound'] ?? '';
-    }
-
-    if (soundSource.isEmpty) {
-      if (mounted) setState(() => _currentlyPlayingIndex = index);
-      int delay = _calculateSilentDelay(_items[index]);
-      Future.delayed(Duration(milliseconds: delay), () {
-        if (_autoplayState == AutoplayState.playing &&
-            _currentlyPlayingIndex == index) {
-          _playNextInSequence();
-        }
-      });
-      return;
-    }
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_autoplayState == AutoplayState.playing) {
-        _playSound(soundSource, index);
-      }
-    });
-  }
-
-  void _scrollToIndex(int index) {
-    if (index < 0 || index >= _cardKeys.length) return;
-    final keyContext = _cardKeys[index].currentContext;
-    if (keyContext != null) {
-      Scrollable.ensureVisible(
-        keyContext,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-        alignment: 0.5,
+    final itemId = widget.itemId;
+    if (itemId == 'bangla_weeks' ||
+        itemId == 'bangla_months' ||
+        itemId == 'bangla_seasons') {
+      _speakAndHighlight(
+        index,
+        () => _speech.speakBangla(_items[index]['item'] ?? ''),
       );
+      return;
     }
-  }
+    if (itemId == 'english_weeks' ||
+        itemId == 'english_months' ||
+        itemId == 'english_seasons') {
+      _speakAndHighlight(
+        index,
+        () => _speech.speakItemWithMeaning(_items[index]),
+      );
+      return;
+    }
+    if (itemId == 'arabic_weeks' ||
+        itemId == 'arabic_months' ||
+        itemId == 'arabic_seasons') {
+      _speakAndHighlight(
+        index,
+        () => _speech.speakArabicWithMeaning(_items[index]),
+      );
+      return;
+    }
+    if (itemId == 'allah_names') {
+      _speakAndHighlight(index, () => _speech.speakAllahName(_items[index]));
+      return;
+    }
+    if (itemId == 'kalima' ||
+        itemId == 'namaj' ||
+        itemId == 'wudu' ||
+        itemId == 'pillars' ||
+        itemId == 'daily_dua' ||
+        itemId == 'roja' ||
+        itemId == 'haj' ||
+        itemId == 'jakat') {
+      _speakAndHighlight(
+        index,
+        () => _speech.speakIslamicContent(_items[index]),
+      );
+      return;
+    }
 
-  void _playNextInSequence() {
-    if (_autoplayState != AutoplayState.playing) return;
-    int nextIndex = _currentlyPlayingIndex + 1;
-    if (nextIndex < _items.length) {
-      _playSequentially(nextIndex);
-    } else {
-      _handleStop();
-    }
+    context.push(
+      '/details/${widget.itemId}/focus/$index',
+      extra: {'title': widget.title, 'color': widget.color},
+    );
   }
 
   @override
@@ -244,6 +157,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
     final bool isArabicCategory =
         widget.itemId == 'arabic_alphabets' ||
         widget.itemId == 'arabic_numbers' ||
+        widget.itemId == 'arabic_weeks' ||
+        widget.itemId == 'arabic_months' ||
+        widget.itemId == 'arabic_seasons' ||
         widget.itemId == 'small_suras' ||
         widget.itemId == 'allah_names';
 
@@ -266,7 +182,10 @@ class _DetailsScreenState extends State<DetailsScreen> {
                 backgroundColor: Colors.transparent,
                 surfaceTintColor: Colors.white,
                 centerTitle: true,
-                title: Text(widget.title ?? ""),
+                title: Text(
+                  widget.title ?? "",
+                  style: const TextStyle(fontWeight: .bold),
+                ),
               ),
               Expanded(
                 child: Directionality(
@@ -275,20 +194,69 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       : TextDirection.ltr,
                   child: MasonryGridView.count(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 24, 12, 100),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
                     crossAxisCount: _getCrossAxisCount(),
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
                     itemCount: _items.length,
                     itemBuilder: (context, index) {
-                      return Container(
+                      return SizedBox(
                         key: _cardKeys[index],
+                        height: _fixedCardHeight(),
                         child: DetailCard(
                           item: _items[index],
                           itemId: widget.itemId,
                           categoryColor: widget.color,
                           isSelected: _currentlyPlayingIndex == index,
+                          isAudioLoading: _isAudioLoading,
                           onTap: () => _handleItemTap(index),
+                          onSpeak: widget.itemId == 'allah_names'
+                              ? (_) => _speech.speakAllahName(_items[index])
+                              : widget.itemId == 'kalima' ||
+                                    widget.itemId == 'namaj' ||
+                                    widget.itemId == 'wudu' ||
+                                    widget.itemId == 'pillars' ||
+                                    widget.itemId == 'daily_dua' ||
+                                    widget.itemId == 'roja' ||
+                                    widget.itemId == 'haj' ||
+                                    widget.itemId == 'jakat'
+                              ? (_) =>
+                                    _speech.speakIslamicContent(_items[index])
+                              : widget.itemId == 'bangla_rhymes'
+                              ? (_) => _speech.speakRhyme(_items[index])
+                              : widget.itemId == 'english_rhymes'
+                              ? (_) => _speech.speakEnglishRhyme(_items[index])
+                              : widget.itemId == 'arabic_alphabets' ||
+                                    widget.itemId == 'arabic_numbers'
+                              ? (_) => _speech.speakArabicItem(_items[index])
+                              : widget.itemId == 'solar_system'
+                              ? (_) => _speech.speakSolarSystem(_items[index])
+                              : widget.itemId == 'bangla_weeks' ||
+                                    widget.itemId == 'bangla_months' ||
+                                    widget.itemId == 'bangla_seasons'
+                              ? (_) => _speech.speakBangla(
+                                  _items[index]['item'] ?? '',
+                                )
+                              : widget.itemId == 'animals' ||
+                                    widget.itemId == 'fruits' ||
+                                    widget.itemId == 'birds' ||
+                                    widget.itemId == 'flowers' ||
+                                    widget.itemId == 'fish' ||
+                                    widget.itemId == 'electronics' ||
+                                    widget.itemId == 'vehicles' ||
+                                    widget.itemId == 'body_parts' ||
+                                    widget.itemId == 'vegetables' ||
+                                    widget.itemId == 'dress' ||
+                                    widget.itemId == 'learning_tools' ||
+                                    widget.itemId == 'flags' ||
+                                    widget.itemId == 'english_weeks' ||
+                                    widget.itemId == 'english_months' ||
+                                    widget.itemId == 'english_seasons'
+                              ? (_) => _speech.speakItemWithRecording(
+                                  widget.itemId ?? '',
+                                  _items[index],
+                                )
+                              : (text) => _speech.speak(text),
                         ),
                       );
                     },
@@ -299,7 +267,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
           ),
           if (_isAudioLoading)
             Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               child: Center(
                 child: Card(
                   margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -330,54 +298,89 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _buildFloatingActionButtons() {
-    if (_autoplayState == AutoplayState.stopped) {
+    if (_autoplay.state == AutoplayState.stopped) {
       return FloatingActionButton.extended(
-        onPressed: _handlePlayPause,
+        onPressed: () {
+          _autoplay.handlePlayPause();
+          setState(() {});
+        },
         backgroundColor: Colors.green,
         heroTag: 'play_all_tag',
         icon: const Icon(Icons.play_arrow, color: Colors.white),
-        label: const Text('Play All', style: TextStyle(color: Colors.white)),
+        label: const Text('সব শুনুন', style: TextStyle(color: Colors.white)),
       );
-    } else {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            onPressed: _handlePlayPause,
-            backgroundColor: Colors.orange,
-            heroTag: 'play_pause_tag',
-            icon: Icon(
-              _autoplayState == AutoplayState.playing
-                  ? Icons.pause
-                  : Icons.play_arrow,
-              color: Colors.white,
-            ),
-            label: Text(
-              _autoplayState == AutoplayState.playing ? 'Pause' : 'Resume',
-              style: const TextStyle(color: Colors.white),
-            ),
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        FloatingActionButton.extended(
+          onPressed: () {
+            _autoplay.handlePlayPause();
+            setState(() {});
+          },
+          backgroundColor: Colors.orange,
+          heroTag: 'play_pause_tag',
+          icon: Icon(
+            _autoplay.state == AutoplayState.playing
+                ? Icons.pause
+                : Icons.play_arrow,
+            color: Colors.white,
           ),
-          const SizedBox(width: 10),
-          FloatingActionButton(
-            onPressed: _handleStop,
-            backgroundColor: Colors.red,
-            heroTag: 'stop_tag',
-            child: const Icon(Icons.stop, color: Colors.white),
+          label: Text(
+            _autoplay.state == AutoplayState.playing ? 'বিরতি' : 'চালু',
+            style: const TextStyle(color: Colors.white),
           ),
-        ],
-      );
+        ),
+        const SizedBox(width: 10),
+        FloatingActionButton(
+          onPressed: () {
+            _autoplay.handleStop();
+            setState(() {});
+          },
+          backgroundColor: Colors.red,
+          heroTag: 'stop_tag',
+          child: const Icon(Icons.stop, color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  /// Categories whose card text length varies get one fixed height so the
+  /// grid rows stay even.
+  double? _fixedCardHeight() {
+    switch (widget.itemId) {
+      case 'math_shapes':
+        return 224;
+      default:
+        return null;
     }
   }
 
   int _getCrossAxisCount() {
     switch (widget.itemId) {
-      case 'english_rhymes':
       case 'bangla_rhymes':
+      case 'english_rhymes':
+      case 'bangla_weeks':
+      case 'bangla_months':
+      case 'bangla_seasons':
+      case 'english_weeks':
+      case 'english_months':
+      case 'english_seasons':
+      case 'arabic_weeks':
+      case 'arabic_months':
+      case 'arabic_seasons':
       case 'allah_names':
       case 'small_suras':
+      case 'kalima':
+      case 'namaj':
+      case 'wudu':
+      case 'pillars':
+      case 'daily_dua':
+      case 'roja':
+      case 'haj':
+      case 'jakat':
         return 1;
-      case 'bangla_consonants':
-        return 3;
       default:
         return 2;
     }

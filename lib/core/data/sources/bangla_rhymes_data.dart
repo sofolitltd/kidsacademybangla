@@ -6,6 +6,7 @@ final Map<String, List<Map<String, dynamic>>> banglaRhymesData = {
       'text':
           'হাট্টিমাটিম টিম,\nতারা মাঠে পারে ডিম।\nতাদের খাড়া দুটো শিং,\nতারা হাট্টিমাটিম টিম।',
       'sound': 'hattimatim_tim.mp3',
+      'image': 'assets/images/rhymes/hattimatim_tim.png',
     },
     {
       'id': 2,
@@ -13,6 +14,7 @@ final Map<String, List<Map<String, dynamic>>> banglaRhymesData = {
       'text':
           'আম পাতা জোড়া জোড়া,\nমারবো চাবুক চড়বো ঘোড়া।\nওরে বুবু সরে দাঁড়া,\nআসছে আমার পাগলা ঘোড়া।\nপাগলা ঘোড়া ক্ষেপেছে\nচাবুক ছুঁড়ে মেরেছে।',
       'sound': 'aam_pata.mp3',
+      'image': 'assets/images/rhymes/aam_pata.png',
     },
     {
       'id': 3,
@@ -20,13 +22,15 @@ final Map<String, List<Map<String, dynamic>>> banglaRhymesData = {
       'text':
           'নোটন নোটন পায়রাগুলি\nঝোটন বেঁধেছে,\nওপারেতে ছেলেমেয়ে\nনাইতে নেমেছে।\nদুই ধারে দুই রুই কাতলা\nভেসে উঠেছে,\nকে দেখেছে কে দেখেছে\nদাদা দেখেছে।\nদাদার হাতে কলম ছিল\nছুড়ে মেরেছে,\nউঃ বড্ড লেগেছে।',
       'sound': 'noton_noton.mp3',
+      'image': 'assets/images/rhymes/noton_noton.png',
     },
     {
       'id': 4,
       'title': 'চাঁদ উঠেছে ফুল ফুটেছে',
       'text':
-          'চাঁদ উঠেছে ফুল ফুটেছে,\nকদম তলায় কে?\nহাতি নাচছে ঘোড়া নাচছে,\nবসোনামণির বে।',
+          'চাঁদ উঠেছে ফুল ফুটেছে,\nকদম তলায় কে?\nহাতি নাচছে ঘোড়া নাচছে,\nসোনামণির বে।',
       'sound': 'chad_utheche.mp3',
+      'image': 'assets/images/rhymes/chad_utheche.png',
     },
     {
       'id': 5,
@@ -34,20 +38,23 @@ final Map<String, List<Map<String, dynamic>>> banglaRhymesData = {
       'text':
           'আয় আয় চাঁদ মামা\nটিপ দিয়ে যা\nচাঁদের কপালে চাঁদ\nটিপ দিয়ে যা।\nধান ভানলে কুঁড়ো দেব\nমাছ কাটলে মুড়ো দেব\nকাল গাইয়ের দুধ দেব\nদুধ খাবার বাটি দেব\nচাঁদের কপালে চাঁদ\nটিপ দিয়ে যা।',
       'sound': 'ay_ay_chad.mp3',
+      'image': 'assets/images/rhymes/ay_ay_chad.png',
     },
-    {
-      'id': 6,
-      'title': 'খোকা ঘুমালো পাড়া জুড়ালো',
-      'text':
-          'খোকা ঘুমালো, পাড়া জুড়ালো, বর্গি এল দেশে।\nবুলবুলিতে ধান খেয়েছে খাজনা দেব কিসে?\nধান ফুরল, পান ফুর, খাজনার উপায় কী?\nআর ক’টা দিন সবুর কর রসুন বুনেছি।।\nধনিয়া পিঁয়াজ গেছে পচে সর্ষে ক্ষেতে জল।\nখরা-বন্যায় শেষ করিল বর্ষার ফসল।।\nধানের গোলা, চালের ঝুড়ি সব শুধু খালি।\nছিন্ন কাপড় জড়িয়ে গায়ে শত শত তালি।',
-      'sound': 'khoka_ghumalo.mp3',
-    },
+    // {
+    //   'id': 6,
+    //   'title': 'খোকা ঘুমালো পাড়া জুড়ালো',
+    //   'text':
+    //       'খোকা ঘুমালো, পাড়া জুড়ালো, বর্গি এল দেশে।\nবুলবুলিতে ধান খেয়েছে খাজনা দেব কিসে?\nধান ফুরল, পান ফুর, খাজনার উপায় কী?\nআর ক’টা দিন সবুর কর রসুন বুনেছি।।\nধনিয়া পিঁয়াজ গেছে পচে সর্ষে ক্ষেতে জল।\nখরা-বন্যায় শেষ করিল বর্ষার ফসল।।\nধানের গোলা, চালের ঝুড়ি সব শুধু খালি।\nছিন্ন কাপড় জড়িয়ে গায়ে শত শত তালি।',
+    //   'sound': 'khoka_ghumalo.mp3',
+    //   'image': 'assets/images/categories/bangla_rhymes.png',
+    // },
     {
       'id': 7,
       'title': 'আতা গাছে তোতা পাখি',
       'text':
           'আতা গাছে তোতা পাখি,\nডালিম গাছে মৌ।\nএত ডাকি তবু কথা,\nকও না কেন বউ?',
       'sound': 'ata_gache.mp3',
+      'image': 'assets/images/rhymes/ata_gache.png',
     },
     {
       'id': 8,
@@ -55,20 +62,23 @@ final Map<String, List<Map<String, dynamic>>> banglaRhymesData = {
       'text':
           'ঐ দেখা যায় তাল গাছ\nঐ আমাগের গাঁ,\nঐ খানেতে বাস করে\nকানা বগীর ছা।\nও বগী তুই খাস কী?\nপানতা ভাত চাস কি?\nপানতা আমি খাই না\nপুঁটি পাছ পাই না\nএকটা যদি পাই\nঅমনি ধরে গাপুস গুপুস খাই।',
       'sound': 'oi_dekha_jay.mp3',
+      'image': 'assets/images/rhymes/oi_dekha_jay.png',
     },
-    {
-      'id': 9,
-      'title': 'বাক বাকুম পায়রা',
-      'text':
-          'বাক বাকুম পায়রা,\nমাথায় দিয়ে টায়রা।\nবউ সাজবে কাল কি,\nচড়বে সোনার পালকি।',
-      'sound': 'bak_bakum.mp3',
-    },
+    // {
+    //   'id': 9,
+    //   'title': 'বাক বাকুম পায়রা',
+    //   'text':
+    //       'বাক বাকুম পায়রা,\nমাথায় দিয়ে টায়রা।\nবউ সাজবে কাল কি,\nচড়বে সোনার পালকি।',
+    //   'sound': 'bak_bakum.mp3',
+    //   'image': 'assets/images/categories/bangla_rhymes.png',
+    // },
     {
       'id': 10,
       'title': 'আয় ছেলেরা আয় মেয়েরা',
       'text':
           'আয় ছেলেরা, আয় মেয়েরা,\nফুল তুলিতে যাই।\nফুলের মালা গলায় দিয়ে,\nমামার বাড়ি যাই।\nঝড়ের দিনে মামার দেশে\nআম কুড়াতে সুখ,\nপাকা জামের মধুর রসে রঙিন করি মুখ। ',
       'sound': 'ay_chelera.mp3',
+      'image': 'assets/images/rhymes/ay_chelera.png',
     },
   ],
 };
