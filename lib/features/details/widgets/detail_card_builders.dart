@@ -181,14 +181,14 @@ Padding _buildAllahNameContent(Map<String, dynamic> item, Color categoryColor) {
         SizedBox(
           width: double.infinity,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: Text(
                   item['item']!,
-                  textAlign: TextAlign.right,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.amiri(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ Padding _buildAllahNameContent(Map<String, dynamic> item, Color categoryColor) {
               const SizedBox(height: 12),
               Text(
                 '(${item['pron']!})',
-                textAlign: TextAlign.right,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
                   fontStyle: FontStyle.italic,
@@ -208,7 +208,7 @@ Padding _buildAllahNameContent(Map<String, dynamic> item, Color categoryColor) {
               const SizedBox(height: 4),
               Text(
                 item['meaning']!,
-                textAlign: TextAlign.right,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,

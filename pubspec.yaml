@@ -1,7 +1,7 @@
 name: kidsacademybangla
 description: "Play, Learn, and Grow in Bangla"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.10.4
@@ -26,6 +26,7 @@ dependencies:
   sensors_plus: ^7.1.1
   url_launcher: ^6.3.3
   in_app_update: ^5.0.0
+  connectivity_plus: ^7.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

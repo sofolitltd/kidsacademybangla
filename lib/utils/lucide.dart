@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 
 /// Minimal local Lucide-like icon wrapper to avoid external dependency.

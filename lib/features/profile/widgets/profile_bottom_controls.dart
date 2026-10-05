@@ -37,7 +37,7 @@ class ProfileBottomControls extends StatelessWidget {
                 ),
               ),
               child: Text(
-                isSlowMode ? '🐕‍🦺 ধ�ীর' : '🐕 স্বাভাবিক',
+                isSlowMode ? '🐕‍🦺 ধীরে' : '🐕 স্বাভাবিক',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

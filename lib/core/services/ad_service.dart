@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kidsacademybangla/core/config/ad_secrets.dart';
@@ -30,9 +33,19 @@ class AdService {
   bool _breakShowing = false;
   RewardedAd? _rewarded;
 
+  bool _nativeLoading = false;
+  bool _rewardedLoading = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
   void init() {
     _loadNative();
     _loadRewarded();
+    // Retry ads that failed to load while offline.
+    _connectivitySub ??= Connectivity().onConnectivityChanged.listen((result) {
+      if (result.every((r) => r == ConnectivityResult.none)) return;
+      if (_native == null) _loadNative();
+      if (_rewarded == null) _loadRewarded();
+    });
   }
 
   // ---------------------------------------------------------------- limits
@@ -49,6 +62,8 @@ class AdService {
   static const Color _accent = Color(0xFFFF7F50);
 
   void _loadNative() {
+    if (_nativeLoading) return;
+    _nativeLoading = true;
     NativeAd(
       adUnitId: _nativeUnitId,
       request: const AdRequest(),
@@ -67,8 +82,12 @@ class AdService {
         ),
       ),
       listener: NativeAdListener(
-        onAdLoaded: (ad) => _native = ad as NativeAd,
+        onAdLoaded: (ad) {
+          _nativeLoading = false;
+          _native = ad as NativeAd;
+        },
         onAdFailedToLoad: (ad, error) {
+          _nativeLoading = false;
           ad.dispose();
           _native = null;
         },
@@ -100,15 +119,19 @@ class AdService {
   // -------------------------------------------------------------- rewarded
 
   void _loadRewarded() {
+    if (_rewardedLoading) return;
+    _rewardedLoading = true;
     RewardedAd.load(
       adUnitId: _rewardedUnitId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
+          _rewardedLoading = false;
           _rewarded = ad;
           rewardedReady.value = true;
         },
         onAdFailedToLoad: (_) {
+          _rewardedLoading = false;
           _rewarded = null;
           rewardedReady.value = false;
         },

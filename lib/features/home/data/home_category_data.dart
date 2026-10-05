@@ -48,12 +48,13 @@ final List<CategoryGroup> groupedCategories = [
         color: Colors.blue,
         categoryKey: 'bangla_numbers',
       ),
-      Category(
-        title: 'বাংলা ছড়া',
-        imagePath: 'assets/images/categories/bangla_rhymes.png',
-        color: Colors.amber,
-        categoryKey: 'bangla_rhymes',
-      ),
+      // Disabled for now; re-enable in a future release.
+      // Category(
+      //   title: 'বাংলা ছড়া',
+      //   imagePath: 'assets/images/categories/bangla_rhymes.png',
+      //   color: Colors.amber,
+      //   categoryKey: 'bangla_rhymes',
+      // ),
       Category(
         title: 'বাংলা সপ্তাহ',
         imagePath: 'assets/images/categories/bangla_weeks.png',
@@ -89,12 +90,13 @@ final List<CategoryGroup> groupedCategories = [
         color: Colors.purple,
         categoryKey: 'english_numbers',
       ),
-      Category(
-        title: 'Rhymes',
-        imagePath: 'assets/images/categories/english_rhymes.png',
-        color: Colors.blueAccent,
-        categoryKey: 'english_rhymes',
-      ),
+      // Disabled for now; re-enable in a future release.
+      // Category(
+      //   title: 'Rhymes',
+      //   imagePath: 'assets/images/categories/english_rhymes.png',
+      //   color: Colors.blueAccent,
+      //   categoryKey: 'english_rhymes',
+      // ),
       Category(
         title: 'Weeks',
         imagePath: 'assets/images/categories/english_weeks.png',

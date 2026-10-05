@@ -110,6 +110,7 @@ class _DetailCardState extends State<DetailCard>
                 : [],
           ),
           child: Stack(
+            alignment: Alignment.center,
             children: [
               buildCardContent(
                 item: widget.item,
