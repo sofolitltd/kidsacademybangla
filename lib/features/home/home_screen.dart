@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/services/ad_service.dart';
+import '../../core/services/age_service.dart';
 import '../../core/services/reward_service.dart';
 import '../../core/services/update_service.dart';
 import '../../core/services/profile_service.dart';
 import '../home/data/home_category_data.dart';
 import '../home/widgets/home_reward_popup.dart';
+import '../home/widgets/home_age_picker.dart';
 import '../home/widgets/home_profile_section.dart';
 import '../home/widgets/home_category_card.dart';
 import '../home/widgets/home_about_tile.dart';
@@ -31,13 +33,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _userTokens = 0;
   int _earnedTokensThisSession = 0;
   List<ChildProfile> _profiles = [];
+  bool _showLater = false;
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
     _loadProfiles();
+    AgeService.level.addListener(_onLevelChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // First launch with no profile and no chosen level: ask once.
+      if (AgeService.level.value == null) _pickAge();
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) UpdateService.checkForUpdate(context);
       });
@@ -51,11 +57,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadProfiles() async {
     final profiles = await ProfileService.getAllProfiles();
+    // A new or edited birth date can change the level.
+    await AgeService.load();
     if (mounted) setState(() => _profiles = profiles);
+  }
+
+  void _onLevelChanged() {
+    if (mounted) setState(() => _showLater = false);
+  }
+
+  Future<void> _pickAge() async {
+    final picked = await showAgePicker(context);
+    if (picked != null) await AgeService.setLevel(picked);
   }
 
   @override
   void dispose() {
+    AgeService.level.removeListener(_onLevelChanged);
     _rewardTimer?.cancel();
     super.dispose();
   }
@@ -80,6 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Called when the child returns from a category. Rate limited in AdService.
   void _showAdIfReady() {
+    // Stars may have been earned in a game while away.
+    _loadInitialData();
     if (mounted) AdService.instance.maybeShowNativeBreak(context);
   }
 
@@ -90,6 +110,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final level = AgeService.level.value;
+    // Categories that suit the child now, kept in their groups; the rest are
+    // tucked into one collapsed section rather than locked away.
+    final forNow = <CategoryGroup>[];
+    final later = <Category>[];
+    for (final group in groupedCategories) {
+      final fits = <Category>[];
+      for (final c in group.items) {
+        (level == null || c.minAge <= level ? fits : later).add(c);
+      }
+      if (fits.isNotEmpty) {
+        forNow.add(CategoryGroup(groupName: group.groupName, items: fits));
+      }
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       extendBodyBehindAppBar: true,
@@ -149,12 +184,34 @@ class _HomeScreenState extends State<HomeScreen> {
                     onProfilesChanged: _loadProfiles,
                   ),
                 ),
-                for (final (i, group) in groupedCategories.indexed) ...[
-                  ..._buildGroupSlivers(group),
-                  // A single banner, at the very end of the list.
-                  if (i == groupedCategories.length - 1)
-                    SliverToBoxAdapter(child: HomeBannerAd(slot: 'g$i')),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: HomeAgeChip(level: level, onTap: _pickAge),
+                    ),
+                  ),
+                ),
+                for (final group in forNow) ..._buildGroupSlivers(group),
+                if (later.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 36, 16, 0),
+                      child: _buildLaterToggle(later.length),
+                    ),
+                  ),
+                  if (_showLater)
+                    ..._buildGroupSlivers(
+                      CategoryGroup(groupName: '', items: later),
+                    ),
                 ],
+                // A single banner, at the very end of the list.
+                SliverToBoxAdapter(
+                  child: HomeBannerAd(
+                    slot: 'g${groupedCategories.length - 1}',
+                  ),
+                ),
                 const SliverToBoxAdapter(child: HomeAboutTile()),
                 const SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
@@ -174,15 +231,18 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _buildGroupSlivers(CategoryGroup group) {
     final items = group.items;
     return [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 36, 16, 16),
-          child: HomeReveal(
-            revealKey: 'header_${group.groupName}',
-            child: _buildSectionHeader(group.groupName),
+      if (group.groupName.isEmpty)
+        const SliverToBoxAdapter(child: SizedBox(height: 16))
+      else
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 36, 16, 16),
+            child: HomeReveal(
+              revealKey: 'header_${group.groupName}',
+              child: _buildSectionHeader(group.groupName),
+            ),
           ),
         ),
-      ),
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         sliver: _isGridView
@@ -225,6 +285,48 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
       ),
     ];
+  }
+
+  /// Collapsed "for when you're older" section header.
+  Widget _buildLaterToggle(int count) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _showLater = !_showLater),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.8),
+            width: 3,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Text('🌱', style: TextStyle(fontSize: 24)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'আরও বড় হলে ($countটি বিষয়)',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF3D2A1E),
+                ),
+              ),
+            ),
+            Icon(
+              _showLater
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
+              size: 28,
+              color: Colors.brown.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSectionHeader(String title) {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Minimal local Lucide-like icon wrapper to avoid external dependency.
 /// Maps commonly used names in this project to nearest Material icons.

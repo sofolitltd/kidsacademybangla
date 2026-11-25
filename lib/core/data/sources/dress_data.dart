@@ -10,7 +10,7 @@ final Map<String, List<Map<String, dynamic>>> dressData = {
     {
       'id': 2,
       'item': 'Pants',
-      'pron': 'পায়জামা',
+      'pron': 'প্যান্ট',
       'image': 'assets/images/dress/pants.png',
       'sound': '',
     },
@@ -24,7 +24,7 @@ final Map<String, List<Map<String, dynamic>>> dressData = {
     {
       'id': 4,
       'item': 'Sweater',
-      'pron': 'সার্টি',
+      'pron': 'সোয়েটার',
       'image': 'assets/images/dress/sweater.png',
       'sound': '',
     },

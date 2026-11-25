@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -21,17 +21,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = YoutubePlayerController(
-      initialVideoId: widget.videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-        disableDragSeek: true,
-        // Prevents kids from skipping content
-        loop: false,
-        isLive: false,
-        forceHD: false,
+    _controller = YoutubePlayerController.fromVideoId(
+      videoId: widget.videoId,
+      autoPlay: true,
+      params: const YoutubePlayerParams(
         enableCaption: false,
+        // Keep children from wandering off to other videos.
+        strictRelatedVideos: true,
+        showVideoAnnotations: false,
       ),
     );
   }
@@ -44,19 +41,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         backgroundColor: Colors.redAccent,
       ),
       body: Center(
-        child: YoutubePlayer(
-          controller: _controller,
-          showVideoProgressIndicator: true,
-          progressIndicatorColor: Colors.red,
-          onReady: () => debugPrint('Player is ready.'),
-        ),
+        child: YoutubePlayer(controller: _controller),
       ),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller.close();
     super.dispose();
   }
 }

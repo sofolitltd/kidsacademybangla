@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../core/services/reward_service.dart';
 import '../rewards/data/reward_item_data.dart';

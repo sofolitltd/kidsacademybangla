@@ -45,7 +45,7 @@ final Map<String, List<Map<String, dynamic>>> birdsData = {
     {
       'id': 7,
       'item': 'Eagle',
-      'pron': 'শালিক',
+      'pron': 'ঈগল',
       'image': 'assets/images/birds/eagle.png',
       'sound': '',
     },
@@ -80,7 +80,7 @@ final Map<String, List<Map<String, dynamic>>> birdsData = {
     {
       'id': 12,
       'item': 'Woodpecker',
-      'pron': 'কাঠঠোকা',
+      'pron': 'কাঠঠোকরা',
       'image': 'assets/images/birds/woodpecker.png',
       'sound': '',
     },
@@ -101,7 +101,7 @@ final Map<String, List<Map<String, dynamic>>> birdsData = {
     {
       'id': 15,
       'item': 'Stork',
-      'pron': 'হাঁড়িচড়া',
+      'pron': 'মানিকজোড়',
       'image': 'assets/images/birds/stork.png',
       'sound': '',
     },
@@ -115,7 +115,7 @@ final Map<String, List<Map<String, dynamic>>> birdsData = {
     {
       'id': 17,
       'item': 'Hummingbird',
-      'pron': 'মৌমাছি পাখি',
+      'pron': 'হামিংবার্ড',
       'image': 'assets/images/birds/hummingbird.png',
       'sound': '',
     },
@@ -136,7 +136,7 @@ final Map<String, List<Map<String, dynamic>>> birdsData = {
     {
       'id': 20,
       'item': 'Seagull',
-      'pron': 'পাখি সমুদ্র',
+      'pron': 'গাঙচিল',
       'image': 'assets/images/birds/seagull.png',
       'sound': '',
     },

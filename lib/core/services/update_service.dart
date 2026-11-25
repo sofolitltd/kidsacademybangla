@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:in_app_update/in_app_update.dart';
 
 /// Google Play in-app updates (Android only).

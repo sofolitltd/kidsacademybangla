@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../../../core/services/age_service.dart';
 
 class Category {
   final String title;
@@ -9,6 +11,9 @@ class Category {
   /// Temporary icon shown instead of [imagePath] while a category still uses
   /// a shared placeholder image. Remove once a real image is added.
   final String? emoji;
+
+  /// Youngest level (2–5) this category suits.
+  int get minAge => AgeService.minAgeFor(categoryKey);
 
   Category({
     required this.title,

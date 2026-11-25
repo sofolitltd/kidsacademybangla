@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import '/features/details/details_screen.dart';
 import '/features/details/focus_details_screen.dart';
+import '/features/details/find_game_screen.dart';
+import '/features/details/trace_screen.dart';
 import '/features/about/about_screen.dart';
 import '/features/home/home_screen.dart';
 import '/features/rewards/reward_page.dart';
@@ -57,6 +59,28 @@ final GoRouter router = GoRouter(
             );
           },
           routes: [
+            GoRoute(
+              path: 'play',
+              builder: (BuildContext context, GoRouterState state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return FindGameScreen(
+                  itemId: state.pathParameters['itemId']!,
+                  title: extra?['title'] as String?,
+                  color: extra?['color'] as Color? ?? Colors.blueGrey,
+                );
+              },
+            ),
+            GoRoute(
+              path: 'trace',
+              builder: (BuildContext context, GoRouterState state) {
+                final extra = state.extra as Map<String, dynamic>?;
+                return TraceScreen(
+                  itemId: state.pathParameters['itemId']!,
+                  title: extra?['title'] as String?,
+                  color: extra?['color'] as Color? ?? Colors.blueGrey,
+                );
+              },
+            ),
             GoRoute(
               path: 'focus/:initialIndex',
               builder: (BuildContext context, GoRouterState state) {

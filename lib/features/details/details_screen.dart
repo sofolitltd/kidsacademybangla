@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/data/app_data.dart';
+import '../../core/services/age_service.dart';
 import '../../core/services/speech_service.dart';
 import './widgets/detail_card.dart';
 import './widgets/details_autoplay_controller.dart';
+import './find_game_screen.dart';
+import './trace_screen.dart';
 
 class DetailsScreen extends StatefulWidget {
   final String? itemId;
@@ -24,6 +27,7 @@ class DetailsScreen extends StatefulWidget {
 }
 
 class _DetailsScreenState extends State<DetailsScreen> {
+  late List<Map<String, dynamic>> _allItems;
   late List<Map<String, dynamic>> _items;
   late SpeechService _speech;
   final ScrollController _scrollController = ScrollController();
@@ -35,10 +39,28 @@ class _DetailsScreenState extends State<DetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _items = AppData.getItems(widget.itemId ?? '');
+    _allItems = AppData.getItemsForLevel(widget.itemId ?? '');
     _speech = SpeechService();
     _speech.initTts();
+
+    // Young children start with a short set; "আরও দেখো" reveals the rest.
+    final cap = AgeService.initialItemCount(
+      widget.itemId ?? '',
+      AgeService.level.value,
+    );
+    _showItems(
+      cap == null || cap >= _allItems.length
+          ? _allItems
+          : _allItems.sublist(0, cap),
+    );
+  }
+
+  bool get _hasMore => _items.length < _allItems.length;
+
+  void _showItems(List<Map<String, dynamic>> items) {
+    _items = items;
     _cardKeys = List.generate(_items.length, (_) => GlobalKey());
+    _currentlyPlayingIndex = -1;
 
     _autoplay = DetailsAutoplayController(
       speech: _speech,
@@ -53,6 +75,27 @@ class _DetailsScreenState extends State<DetailsScreen> {
       onStateChanged: (_) {
         if (mounted) setState(() {});
       },
+    );
+  }
+
+  void _showAllItems() {
+    _speech.audioPlayer.stop();
+    _autoplay.handleStop();
+    _autoplay.dispose();
+    setState(() => _showItems(_allItems));
+  }
+
+  Future<void> _openGame() => _openActivity('play');
+
+  Future<void> _openTrace() => _openActivity('trace');
+
+  Future<void> _openActivity(String path) async {
+    _speech.audioPlayer.stop();
+    _autoplay.handleStop();
+    setState(() {});
+    await context.push(
+      '/details/${widget.itemId}/$path',
+      extra: {'title': widget.title, 'color': widget.color},
     );
   }
 
@@ -198,8 +241,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     crossAxisCount: _getCrossAxisCount(),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    itemCount: _items.length,
+                    itemCount: _items.length + (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == _items.length) return _buildMoreTile();
                       return SizedBox(
                         key: _cardKeys[index],
                         height: _fixedCardHeight(),
@@ -297,9 +341,52 @@ class _DetailsScreenState extends State<DetailsScreen> {
     );
   }
 
+  /// Tile at the end of a shortened set that reveals the remaining items.
+  Widget _buildMoreTile() {
+    return GestureDetector(
+      onTap: _showAllItems,
+      child: Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: widget.color.withValues(alpha: 0.5),
+            width: 3,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle_rounded, size: 56, color: widget.color),
+            const SizedBox(height: 8),
+            const Text(
+              'আরও দেখো',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The find-it game needs recall, so it starts at the 3–4 level.
+  bool get _showGameButton {
+    final level = AgeService.level.value;
+    return FindGameScreen.supports(widget.itemId ?? '') &&
+        (level == null || level >= 3);
+  }
+
+  /// Tracing needs finger control that usually arrives around four.
+  bool get _showTraceButton {
+    final level = AgeService.level.value;
+    return TraceScreen.supports(widget.itemId ?? '') &&
+        (level == null || level >= 4);
+  }
+
   Widget _buildFloatingActionButtons() {
     if (_autoplay.state == AutoplayState.stopped) {
-      return FloatingActionButton.extended(
+      final listen = FloatingActionButton.extended(
         onPressed: () {
           _autoplay.handlePlayPause();
           setState(() {});
@@ -308,6 +395,34 @@ class _DetailsScreenState extends State<DetailsScreen> {
         heroTag: 'play_all_tag',
         icon: const Icon(Icons.play_arrow, color: Colors.white),
         label: const Text('সব শুনুন', style: TextStyle(color: Colors.white)),
+      );
+      if (!_showGameButton && !_showTraceButton) return listen;
+      // Icon-only so three buttons fit on a narrow phone.
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          if (_showTraceButton) ...[
+            FloatingActionButton(
+              onPressed: _openTrace,
+              backgroundColor: Colors.pink,
+              heroTag: 'trace_tag',
+              tooltip: 'আঁকো',
+              child: const Icon(Icons.brush_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+          ],
+          if (_showGameButton) ...[
+            FloatingActionButton(
+              onPressed: _openGame,
+              backgroundColor: Colors.deepPurple,
+              heroTag: 'find_game_tag',
+              tooltip: 'খেলো',
+              child: const Icon(Icons.extension_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+          ],
+          listen,
+        ],
       );
     }
 

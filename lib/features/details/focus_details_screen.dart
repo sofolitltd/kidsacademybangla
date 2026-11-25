@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import '../../core/data/app_data.dart';
@@ -62,7 +62,7 @@ class _FocusDetailsScreenState extends State<FocusDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _items = AppData.getItems(widget.itemId);
+    _items = AppData.getItemsForLevel(widget.itemId);
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
     _bottomListController = ScrollController();
@@ -110,6 +110,15 @@ class _FocusDetailsScreenState extends State<FocusDetailsScreen> {
   }
 
   Future<void> _speak(String text) => _speech.speak(text);
+
+  Future<void> _speakExample(String phrase) {
+    if (_isAutoPlaying) _stopAutoPlay();
+    return widget.itemId == 'english_alphabets'
+        ? _speech.speakEnglish(phrase)
+        // The hyphen is for reading; drop it so it isn't voiced.
+        : _speech.speakBangla(phrase.replaceAll('-', ' '));
+  }
+
   Future<void> _speakAllahName(Map<String, dynamic> item) =>
       _speech.speakAllahName(item);
   Future<void> _speakArabicItem(Map<String, dynamic> item) =>
@@ -473,6 +482,7 @@ class _FocusDetailsScreenState extends State<FocusDetailsScreen> {
                                                   activeVerseIndex:
                                                       _activeVerseIndex,
                                                   letterColors: _letterColors,
+                                                  onSpeakExample: _speakExample,
                                                 ),
                                               ],
                                             ),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:country_flags/country_flags.dart';
 
@@ -19,9 +19,11 @@ Widget buildFlagContent(Map<String, dynamic> item, Color categoryColor) {
       children: [
         CountryFlag.fromCountryCode(
           countryCode,
-          shape: const RoundedRectangle(6),
-          width: 64,
-          height: 44,
+          theme: const ImageTheme(
+            shape: RoundedRectangle(6),
+            width: 64,
+            height: 44,
+          ),
         ),
         const SizedBox(height: 12),
         Text(

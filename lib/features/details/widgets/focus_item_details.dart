@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:country_flags/country_flags.dart';
 
 import 'clock_art.dart';
 import 'shape_art.dart';
 import 'tilt_3d_image.dart';
+import '../../../core/data/letter_examples.dart';
+import './letter_example_view.dart';
 
 Color colorFromHex(String hexColor) {
   final hexCode = hexColor.replaceAll('#', '');
@@ -18,6 +20,9 @@ class FocusItemDetails extends StatelessWidget {
   final int activeVerseIndex;
   final List<Color> letterColors;
 
+  /// Speaks a letter's example phrase when its picture is tapped.
+  final ValueChanged<String>? onSpeakExample;
+
   const FocusItemDetails({
     super.key,
     required this.item,
@@ -25,6 +30,7 @@ class FocusItemDetails extends StatelessWidget {
     required this.color,
     this.activeVerseIndex = -1,
     required this.letterColors,
+    this.onSpeakExample,
   });
 
   @override
@@ -501,9 +507,11 @@ class FocusItemDetails extends StatelessWidget {
       children: [
         CountryFlag.fromCountryCode(
           countryCode,
-          shape: const RoundedRectangle(6),
-          width: 160,
-          height: 110,
+          theme: const ImageTheme(
+            shape: RoundedRectangle(6),
+            width: 160,
+            height: 110,
+          ),
         ),
         const SizedBox(height: 32),
         Text(
@@ -583,13 +591,15 @@ class FocusItemDetails extends StatelessWidget {
       'bangla_vowels',
       'bangla_consonants',
     ].contains(itemId);
+    final hasExample = letterExampleFor(itemId, item) != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           item['item']!,
           style: TextStyle(
-            fontSize: 180,
+            // Smaller when a picture shares the page.
+            fontSize: hasExample ? 140 : 180,
             fontWeight: FontWeight.bold,
             color: stableColor,
             fontFamily: isBangla
@@ -602,6 +612,16 @@ class FocusItemDetails extends StatelessWidget {
             item['pron']!,
             style: TextStyle(fontSize: 40, color: Colors.grey.shade700),
           ),
+        if (hasExample) ...[
+          const SizedBox(height: 16),
+          LetterExampleView(
+            itemId: itemId,
+            item: item,
+            pictureSize: 150,
+            fontSize: 30,
+            onSpeak: onSpeakExample,
+          ),
+        ],
       ],
     );
   }

@@ -1,3 +1,4 @@
+import '../services/age_service.dart';
 import './sources/allah_names_data.dart';
 import './sources/animals_data.dart';
 import './sources/arabic_alphabets_data.dart';
@@ -101,5 +102,16 @@ class AppData {
       items.sort((a, b) => (a['id'] as int).compareTo(b['id'] as int));
     }
     return items;
+  }
+
+  /// Items in the order that suits the child's current level (familiar things
+  /// first for the youngest). Every screen that indexes into a category must
+  /// use this, so indices agree between the grid, the pager and the game.
+  static List<Map<String, dynamic>> getItemsForLevel(String categoryKey) {
+    return AgeService.orderItems(
+      categoryKey,
+      getItems(categoryKey),
+      AgeService.level.value,
+    );
   }
 }

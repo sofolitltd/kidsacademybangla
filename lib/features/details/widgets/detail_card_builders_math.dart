@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'clock_art.dart';
 import 'shape_art.dart';
+import '../../../core/data/letter_examples.dart';
+import './letter_example_view.dart';
 
 Widget buildShapesContent(Map<String, dynamic> item, Color categoryColor) {
   final String title = item['item'] ?? '';
@@ -166,6 +168,16 @@ Widget buildDefaultContent(
                 color: Colors.grey.shade700,
                 height: 1,
               ),
+            ),
+          ),
+        if (itemId != null && letterExampleFor(itemId, item) != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: LetterExampleView(
+              itemId: itemId,
+              item: item,
+              pictureSize: 64,
+              fontSize: 16,
             ),
           ),
       ],

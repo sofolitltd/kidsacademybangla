@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void showItemDetails(BuildContext context, Map<String, dynamic> item) {
   showDialog(

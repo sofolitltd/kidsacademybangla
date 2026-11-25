@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ProfileInfoCard extends StatelessWidget {
   final Map<String, String> item;
@@ -22,7 +22,7 @@ class ProfileInfoCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
         transform: isPlaying
-            ? (Matrix4.identity()..scale(0.98))
+            ? (Matrix4.identity()..scaleByDouble(0.98, 0.98, 0.98, 1))
             : Matrix4.identity(),
         decoration: BoxDecoration(
           color: isPlaying

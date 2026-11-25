@@ -59,7 +59,7 @@ final Map<String, List<Map<String, dynamic>>> flowersData = {
     {
       'id': 9,
       'item': 'Plumeria',
-      'pron': 'চমেলা',
+      'pron': 'কাঠগোলাপ',
       'image': 'assets/images/flowers/plumeria.png',
       'sound': '',
     },

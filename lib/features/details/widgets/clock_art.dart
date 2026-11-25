@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Analog clock drawn in code that shows an exact time, so lessons like
 /// "৩:০০" are readable at a glance (replaces the generic clock emoji).

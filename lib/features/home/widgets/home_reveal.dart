@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Fade + slide + soft scale entrance. Plays once per [revealKey]; items that
 /// were already revealed (e.g. scrolled back into view) appear instantly.

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Crisp, gradient-filled geometric shapes drawn in code (no emoji).
 /// [shape] is the English shape name from the data ('Circle', 'Square', ...).

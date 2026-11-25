@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kidsacademybangla/core/config/ad_secrets.dart';
 

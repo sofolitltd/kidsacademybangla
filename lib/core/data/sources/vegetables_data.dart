@@ -101,7 +101,7 @@ final Map<String, List<Map<String, dynamic>>> vegetablesData = {
     {
       'id': 15,
       'item': 'Ridge Gourd',
-      'pron': 'ঢেঁড়স',
+      'pron': 'ঝিঙা',
       'image': 'assets/images/vegetables/ridge_gourd.png',
       'sound': '',
     },
@@ -136,7 +136,7 @@ final Map<String, List<Map<String, dynamic>>> vegetablesData = {
     {
       'id': 20,
       'item': 'Amaranth',
-      'pron': 'পুঁইশাক',
+      'pron': 'লাল শাক',
       'image': 'assets/images/vegetables/amaranth.png',
       'sound': '',
     },
